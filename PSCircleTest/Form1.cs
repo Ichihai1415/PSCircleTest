@@ -55,7 +55,7 @@ namespace PSCircleTest
                     var dist = GeodesicDistance.Dist([centerLat, centerLon], [imgLat, imgLon]) / 1000d;//km
                     if (double.IsNaN(dist))
                         continue;
-                    var level = dist / cor;//m->km 100km->20 (F’iŠK)
+                    var level = dist / cor;//F’iŠK
                     var co = level > 765 ? Color.FromArgb(a, 128, 128, 128) : level > 510 ? Color.FromArgb(a, 0, 0, (int)level - 510) : level > 255 ? Color.FromArgb(a, 0, (int)level - 255, 0) : Color.FromArgb(a, (int)level, 0, 0);
                     g.DrawLine(new Pen(new SolidBrush(co)), x, y, x + 1, y);
 
@@ -98,10 +98,9 @@ namespace PSCircleTest
 
 
             var psApprox = new List<Point>();
-           
             for (double d = 0; d <= 360; d += deltaD)
             {
-                var pt = Vincenty.VincentyDirect(centerLat, centerLon, d, newDist);
+                var pt = Vincenty.VincentyDirect(centerLat, centerLon, d, newDist, 1);
                 psApprox.Add(new Point((int)((pt.Value.lon - config.LonSta) * zoomW), (int)((config.LatEnd - pt.Value.lat) * zoomH)));
             }
 

@@ -1,6 +1,6 @@
 ﻿namespace PSCircleTest
 {
-    //https://qiita.com/r-fuji/items/5eefb451cf7113f1e51b
+    //https://qiita.com/r-fuji/items/5eefb451cf7113f1e51b を移植
     public class Vincenty
     {
         // 楕円体
