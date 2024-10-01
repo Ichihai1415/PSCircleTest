@@ -14,9 +14,26 @@ namespace PSCircleTest
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            TimeTable.GetTT();
+            /*
+            var psDist = TimeTable.GetDistLinear(300, 200.2);
+            Console.WriteLine($"P:{psDist.PDist}km, S:{psDist.SDist}km");
+            */
+
+            config.HypoLat = 40.3;
+            config.HypoLon = 145.2;
+            config.HypoDepth = 170;
+
+            //BackgroundImage = EEWMap(0.7);
+            //Console.WriteLine((DateTime.Now - st).TotalMilliseconds + "ms!");
+            
+            AutoExe.Enabled = true;//アニメーション実行
+
+            return;
             BackgroundImage = Draw_Map();
         }
 
+        private const int V = 8;
         public static Config_Color color = new();
 
         public static Config_Map config = new();
@@ -118,12 +135,127 @@ namespace PSCircleTest
             return mapImg;
         }
 
+        public Bitmap EEWMap(double sec = 10)
+        {
+
+
+            var a = 128;
+            var cor = 1000 / 255d;
+
+            var deltaD = 0.1d;//360/deltaD+1個の点を計算します 
+
+
+
+            var mapImg = new Bitmap(config.MapSize, config.MapSize);
+            var zoomW = config.MapSize / (config.LonEnd - config.LonSta);
+            var zoomH = config.MapSize / (config.LatEnd - config.LatSta);
+            var mapjson = JsonNode.Parse(Resources.AreaForecastLocalE_GIS_20190125_01);
+            var g = Graphics.FromImage(mapImg);
+            g.Clear(color.Map.Sea);
+
+
+
+            var gPath = new GraphicsPath();
+            gPath.StartFigure();
+            foreach (var mapjson_feature in mapjson["features"].AsArray().Where(x => x["geometry"] != null))
+            {
+                if ((string?)mapjson_feature["geometry"]["type"] == "Polygon")
+                {
+                    var points = mapjson_feature["geometry"]["coordinates"][0].AsArray().Select(mapjson_coordinate => new Point((int)(((double)mapjson_coordinate[0] - config.LonSta) * zoomW), (int)((config.LatEnd - (double)mapjson_coordinate[1]) * zoomH))).ToArray();
+                    if (points.Length > 2)
+                        gPath.AddPolygon(points);
+                }
+                else
+                {
+                    foreach (var mapjson_coordinates in mapjson_feature["geometry"]["coordinates"].AsArray())
+                    {
+                        var points = mapjson_coordinates[0].AsArray().Select(mapjson_coordinate => new Point((int)(((double)mapjson_coordinate[0] - config.LonSta) * zoomW), (int)((config.LatEnd - (double)mapjson_coordinate[1]) * zoomH))).ToArray();
+                        if (points.Length > 2)
+                            gPath.AddPolygon(points);
+                    }
+                }
+            }
+            g.FillPath(new SolidBrush(color.Map.Japan), gPath);
+            g.DrawPath(new Pen(color.Map.Japan_Border, config.MapSize / 1080f), gPath);
+
+
+            var psDist = TimeTable.GetDistLinear(config.HypoDepth, sec);
+
+            var pApprox = new List<Point>();
+            for (double d = 0; d <= 360; d += deltaD)
+            {
+                var pt = Vincenty.VincentyDirect(config.HypoLat, config.HypoLon, d, psDist.PDist * 1000, 1);
+                pApprox.Add(new Point((int)((pt.Value.lon - config.LonSta) * zoomW), (int)((config.LatEnd - pt.Value.lat) * zoomH)));
+            }
+
+            var sApprox = new List<Point>();
+            for (double d = 0; d <= 360; d += deltaD)
+            {
+                var pt = Vincenty.VincentyDirect(config.HypoLat, config.HypoLon, d, psDist.SDist * 1000, 1);
+                sApprox.Add(new Point((int)((pt.Value.lon - config.LonSta) * zoomW), (int)((config.LatEnd - pt.Value.lat) * zoomH)));
+            }
+
+            g.DrawPolygon(new Pen(Color.FromArgb(0, 0, 255), 2), pApprox.ToArray());
+            g.DrawPolygon(new Pen(Color.FromArgb(255, 0, 0), 2), sApprox.ToArray());
+            g.FillPolygon(new SolidBrush(Color.FromArgb(64, 255, 0, 0)), sApprox.ToArray());
+            //throw new Exception();
+
+
+            var cx = (int)((config.HypoLon - config.LonSta) * zoomW);
+            var cy = (int)((config.LatEnd - config.HypoLat) * zoomH);
+
+            var penW = 4;
+            var penL = (int)(penW * 1.5);
+
+            int yellowW = Math.Max((int)(penW * 0.5), 1);
+            int yellowWx = Math.Max((int)(penW * 0.18), 1);
+            g.DrawLine(new Pen(Color.Yellow, penW + yellowW), cx - penL - yellowWx, cy - penL - yellowWx, cx + penL + yellowWx, cy + penL + yellowWx);
+            g.DrawLine(new Pen(Color.Yellow, penW + yellowW), cx - penL - yellowWx, cy + penL + yellowWx, cx + penL + yellowWx, cy - penL - yellowWx);
+            g.DrawLine(new Pen(Color.Red, penW), cx - penL, cy - penL, cx + penL, cy + penL);
+            g.DrawLine(new Pen(Color.Red, penW), cx - penL, cy + penL, cx + penL, cy - penL);
+
+            /*
+            var path = $"output\\{DateTime.Now:yyyyMMddHHmmss}.png";
+            Directory.CreateDirectory("output");
+            mapImg.Save(path, ImageFormat.Png);
+            Console.WriteLine(Path.GetFullPath(path) + " に保存しました");
+            */
+            g.Dispose();
+            return mapImg;
+        }
+
         public class Config_Map
         {
             /// <summary>
             /// 画像の高さ
             /// </summary>
             public int MapSize { get; set; } = 1080;
+
+
+            
+
+
+            /// <summary>
+            /// 緯度の始点
+            /// </summary>
+            public double LatSta { get; set; } = 30;
+
+            /// <summary>
+            /// 緯度の終点
+            /// </summary>
+            public double LatEnd { get; set; } = 40;
+
+            /// <summary>
+            /// 経度の始点
+            /// </summary>
+            public double LonSta { get; set; } = 130;
+
+            /// <summary>
+            /// 経度の終点
+            /// </summary>
+            public double LonEnd { get; set; } = 140;
+
+            /*
 
             /// <summary>
             /// 緯度の始点
@@ -144,7 +276,32 @@ namespace PSCircleTest
             /// 経度の終点
             /// </summary>
             public double LonEnd { get; set; } = 150;
+
+            */
+
+            /// <summary>
+            /// 震央の緯度
+            /// </summary>
+            public double HypoLat { get; set; } = double.NaN;
+
+            /// <summary>
+            /// 震央の経度
+            /// </summary>
+            public double HypoLon { get; set; } = double.NaN;
+
+            /// <summary>
+            /// 震源の深さ
+            /// </summary>
+            public double HypoDepth { get; set; } = double.NaN;
+
         }
+
+        public struct GeoCoordinates
+        {
+            double Lat;
+            double Lon;
+        }
+
         public class Config_Color
         {
             /// <summary>
@@ -160,7 +317,7 @@ namespace PSCircleTest
                 /// <summary>
                 /// 海洋の塗りつぶし色
                 /// </summary>
-                public Color Sea { get; set; } = Color.FromArgb(0, 0, 0);
+                public Color Sea { get; set; } = Color.FromArgb(30, 30, 60);
 
                 /// <summary>
                 /// 世界(日本除く)の塗りつぶし色
@@ -175,7 +332,7 @@ namespace PSCircleTest
                 /// <summary>
                 /// 日本の塗りつぶし色
                 /// </summary>
-                public Color Japan { get; set; } = Color.FromArgb(0, 0, 0, 0);
+                public Color Japan { get; set; } = Color.FromArgb(100, 100, 150);
 
                 /// <summary>
                 /// 日本の境界線色
@@ -197,6 +354,19 @@ namespace PSCircleTest
             /// 震央円の透明度
             /// </summary>
             public int Hypo_Alpha { get; set; } = 204;
+        }
+
+        static int autoIndex = 240;
+        static double fps = V;
+
+        private void AutoExe_Tick(object sender, EventArgs e)
+        {
+
+            AutoExe.Interval = (int)(1000 / fps);
+            var st = DateTime.Now;
+            PicBox.BackgroundImage = EEWMap(autoIndex / fps);
+            Console.WriteLine((autoIndex / fps).ToString("0.0000") + "s:" + (DateTime.Now - st).TotalMilliseconds.ToString("0.0000") + "ms!");
+            autoIndex++;
         }
     }
 }

@@ -11,5 +11,6 @@ Qiitaに記事を投稿しました。[P波・S波を簡単かつ正確に描画
 - 地図(Resourcesにある): 気象庁GISデータ AreaForecastLocalEを加工
 - 2点の緯度経度から距離計算(CalDist.cs): https://qiita.com/matsuda_tkm/items/4eba5632535ca2f699b4 を移植
 - 緯度経度と方位角と距離から緯度経度計算(CalLatLon.cs): https://qiita.com/r-fuji/items/5eefb451cf7113f1e51b を移植
+- 深さと時間からPS波の距離計算(TimeTable.cs) https://zenn.dev/boocsan/articles/travel-time-table-converter-adcal2020 を参考に
 
-移植にはCopilotを利用しました。
+- 移植にはCopilotを利用しました。
