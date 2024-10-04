@@ -1,6 +1,8 @@
 using PSCircleTest.Properties;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace PSCircleTest
@@ -12,9 +14,54 @@ namespace PSCircleTest
             InitializeComponent();
         }
 
+        public static readonly double calSpan = 0.1;
+
         private void Form1_Load(object sender, EventArgs e)
         {
             TimeTable.GetTT();
+
+            Directory.CreateDirectory($"output-csv-{calSpan}");
+
+            var depthList = TimeTable.rawDatas.Dists.Keys.ToList();
+            //var psds = new List<TimeTable.TJMA2001.TimePSDists>();
+            foreach (var depth in depthList)
+            {
+                //var tmpData = new TimeTable.TJMA2001.TimePSDists();
+                var tmpText = new StringBuilder("Seconds,P-Wave distance,S-Wave distance\n");
+                for (double sec = 0; sec < 480; sec += calSpan)
+                {
+                    sec = Math.Round(sec, 2);//浮動小数点数計算誤差修正用
+                    var (pDist, sDist) = TimeTable.GetDistLinear(depth, sec, 0, -1);
+                    if (sec == (int)sec)
+                        Console.WriteLine($"depth={depth:000}km  sec:{sec:000.0}  ->  P:{pDist}km, S:{sDist}km");
+                    if (pDist != -1 || sDist != -1)
+                    {
+                        /*tmpData.TimeData.Add(new TimeTable.TJMA2001.TimePSDists.TimeData_
+                        {
+                            Seconds = sec,
+                            PDist = pDist,
+                            SDist = sDist
+                        });*/
+                        tmpText.Append(sec);
+                        tmpText.Append(',');
+                        tmpText.Append(pDist);
+                        tmpText.Append(',');
+                        tmpText.Append(sDist);
+                        tmpText.AppendLine();
+                    }
+
+                }
+                //psds.Add(tmpData);
+                File.WriteAllText($"output-csv-{calSpan}\\{depth}.csv", tmpText.ToString());
+            }
+            /*
+            var jsonText = JsonSerializer.Serialize(psds);
+            File.WriteAllText($"psdists-{calSpan}.json", jsonText);
+            */
+
+            return;
+
+
             /*
             var psDist = TimeTable.GetDistLinear(300, 200.2);
             Console.WriteLine($"P:{psDist.PDist}km, S:{psDist.SDist}km");
@@ -26,7 +73,7 @@ namespace PSCircleTest
 
             //BackgroundImage = EEWMap(0.7);
             //Console.WriteLine((DateTime.Now - st).TotalMilliseconds + "ms!");
-            
+
             AutoExe.Enabled = true;//アニメーション実行
 
             return;
@@ -232,7 +279,7 @@ namespace PSCircleTest
             public int MapSize { get; set; } = 1080;
 
 
-            
+
 
 
             /// <summary>

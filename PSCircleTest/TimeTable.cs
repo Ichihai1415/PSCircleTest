@@ -50,7 +50,7 @@ namespace PSCircleTest
         }
 
 
-        public static (double PDist, double SDist) GetDistLinear(double depth, double sec, double whenOutofRange = double.NaN)//参考:https://zenn.dev/boocsan/articles/travel-time-table-converter-adcal2020
+        public static (double PDist, double SDist) GetDistLinear(double depth, double sec, int digits = 0, double whenOutofRange = double.NaN)//参考:https://zenn.dev/boocsan/articles/travel-time-table-converter-adcal2020
         {
 
             if (depth > 705)
@@ -94,10 +94,14 @@ namespace PSCircleTest
 
             //Console.WriteLine($"d:{depth} s:{sec}  pd:{pDist} sd:{sDist}   * d<0 => d=0");
 
-            if (pDist < 0 || pDist > 2000)
+            if (!double.IsNormal(pDist) || pDist < 0 || pDist > 2000)
                 pDist = whenOutofRange;
-            if (sDist < 0 || sDist > 2000)
+            else
+                pDist = Math.Round(pDist, digits, MidpointRounding.AwayFromZero);
+            if (!double.IsNormal(sDist) || sDist < 0 || sDist > 2000)
                 sDist = whenOutofRange;
+            else
+                sDist = Math.Round(sDist, digits, MidpointRounding.AwayFromZero);
             return (pDist, sDist);
         }
 
@@ -126,6 +130,33 @@ namespace PSCircleTest
                     public double PTime { get; set; }
                     public double STime { get; set; }
                 }
+            }
+
+            public class Time2PSDists_Old
+            {
+                public Dictionary<int, Dictionary<double, PSTime>> Dists { get; set; } = [];//<depth,<time,[Pdist,Sdist]>>
+
+                public class PSTime
+                {
+                    public double PDist { get; set; }
+                    public double SDist { get; set; }
+                }
+            }
+
+            public class TimePSDists
+            {
+                public int Depth { get; set; }
+                public List<TimeData_> TimeData { get; set; } = [];
+
+                public class TimeData_
+                {
+                    public double Seconds { get; set; }
+
+                    public double PDist { get; set; }
+                    public double SDist { get; set; }
+                }
+
+
             }
         }
     }
