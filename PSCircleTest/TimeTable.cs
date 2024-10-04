@@ -33,8 +33,7 @@ namespace PSCircleTest
                 */
                 var newDistPSTime = new List<DistPSTime>
                 {
-                    new DistPSTime
-                    {
+                    new() {
                         Dist = dist,
                         PTime = pTime,
                         STime = sTime
@@ -51,11 +50,11 @@ namespace PSCircleTest
         }
 
 
-        public static (double PDist, double SDist) GetDistLinear(double depth, double sec)//参考:https://zenn.dev/boocsan/articles/travel-time-table-converter-adcal2020
+        public static (double PDist, double SDist) GetDistLinear(double depth, double sec, double whenOutofRange = double.NaN)//参考:https://zenn.dev/boocsan/articles/travel-time-table-converter-adcal2020
         {
 
             if (depth > 705)
-                return (double.NaN, double.NaN);
+                return (whenOutofRange, whenOutofRange);
 
 
             var depthList = rawDatas.Dists.Keys.ToList();
@@ -95,10 +94,10 @@ namespace PSCircleTest
 
             //Console.WriteLine($"d:{depth} s:{sec}  pd:{pDist} sd:{sDist}   * d<0 => d=0");
 
-            if (pDist < 0)
-                pDist = 0;
-            if (sDist < 0)
-                sDist = 0;
+            if (pDist < 0 || pDist > 2000)
+                pDist = whenOutofRange;
+            if (sDist < 0 || sDist > 2000)
+                sDist = whenOutofRange;
             return (pDist, sDist);
         }
 
