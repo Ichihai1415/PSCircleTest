@@ -73,7 +73,7 @@ namespace PSCircleTest
                     break;
                 }
 
-
+            
             var distPSTime = rawDatas.Dists[cDepth];//深さに対応する震央距離とPS時間
 
             var pDist = double.NaN;
@@ -145,7 +145,7 @@ namespace PSCircleTest
 
             public class TimePSDists
             {
-                public int Depth { get; set; }
+                public int Depth { get; set; } = -1;
                 public List<TimeData_> TimeData { get; set; } = [];
 
                 public class TimeData_

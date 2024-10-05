@@ -23,10 +23,15 @@ namespace PSCircleTest
             Directory.CreateDirectory($"output-csv-{calSpan}");
 
             var depthList = TimeTable.rawDatas.Dists.Keys.ToList();
-            //var psds = new List<TimeTable.TJMA2001.TimePSDists>();
+            var psds = new List<TimeTable.TJMA2001.TimePSDists>();
+
             foreach (var depth in depthList)
             {
-                //var tmpData = new TimeTable.TJMA2001.TimePSDists();
+                var tmpData = new TimeTable.TJMA2001.TimePSDists()
+                {
+                    Depth = depth
+                };
+
                 var tmpText = new StringBuilder("Seconds,P-Wave distance,S-Wave distance\n");
                 for (double sec = 0; sec < 480; sec += calSpan)
                 {
@@ -36,12 +41,13 @@ namespace PSCircleTest
                         Console.WriteLine($"depth={depth:000}km  sec:{sec:000.0}  ->  P:{pDist}km, S:{sDist}km");
                     if (pDist != -1 || sDist != -1)
                     {
-                        /*tmpData.TimeData.Add(new TimeTable.TJMA2001.TimePSDists.TimeData_
+                        tmpData.TimeData.Add(new TimeTable.TJMA2001.TimePSDists.TimeData_
                         {
                             Seconds = sec,
                             PDist = pDist,
                             SDist = sDist
-                        });*/
+                        });
+
                         tmpText.Append(sec);
                         tmpText.Append(',');
                         tmpText.Append(pDist);
@@ -51,13 +57,14 @@ namespace PSCircleTest
                     }
 
                 }
-                //psds.Add(tmpData);
-                File.WriteAllText($"output-csv-{calSpan}\\{depth}.csv", tmpText.ToString());
+                psds.Add(tmpData);
+
+                File.WriteAllText($"output-csv-{calSpan}\\tjma2001-sec2dist-{depth}km.csv", tmpText.ToString());
             }
-            /*
+            
             var jsonText = JsonSerializer.Serialize(psds);
             File.WriteAllText($"psdists-{calSpan}.json", jsonText);
-            */
+            
 
             return;
 
